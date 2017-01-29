@@ -1,0 +1,12 @@
+{
+  "name": "dockerwatch-stats",
+  "version": "1.0.0",
+  "description": "Get stats from Docker container and send to server",
+  "main": "client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node client.js"
+  },
+  "author": "Shane Lacey",
+  "license": "ISC"
+}
