@@ -14,7 +14,7 @@ client.on('close', function(){
 	console.log('CONNECTION CLOSED')
 })
 
-var getContainerInfo = {
+var getContainerResourceUsage = {
 	port: 8000,
 	socketPath: '/var/run/docker.sock',
 	host: '127.0.0.1',
@@ -22,7 +22,7 @@ var getContainerInfo = {
 	path: '/containers/'+CONTAINERID+'/stats?stream=true'
 }
 
-listContainerInfo = function(res){
+sendContainerInfo = function(res){
 	var prevConCpu = 0
 	var prevSysCpu = 0
 	res.on('data', function(info){
@@ -33,7 +33,7 @@ listContainerInfo = function(res){
 				var currSysCpu = stats.cpu_stats.system_cpu_usage - prevSysCpu
 				prevConCpu = stats.cpu_stats.cpu_usage.total_usage
 				prevSysCpu = stats.cpu_stats.system_cpu_usage
-				var cpuUsedByCon = (currConCpu / currSysCpu) * 100
+				var cpuUsedByCon = ((currConCpu / currSysCpu) * 100) * 2
 				var memUsedByCon = ((stats.memory_stats.usage / stats.memory_stats.limit) * 100)
 				var dataToSend = {
 					id: CONTAINERID,
@@ -49,5 +49,5 @@ listContainerInfo = function(res){
 	})
 }
 
-var init = http.request(getContainerInfo, listContainerInfo)
+var init = http.request(getContainerResourceUsage, sendContainerInfo)
 init.end()
