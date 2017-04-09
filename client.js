@@ -22,7 +22,15 @@ var getContainerResourceUsage = {
 	path: '/containers/'+CONTAINERID+'/stats?stream=true'
 }
 
-sendContainerInfo = function(res){
+var getContainerInfo = {
+	port: 8000,
+	socketPath: '/var/run/docker.sock',
+	host: '127.0.0.1',
+	method: 'GET',
+	path: '/containers/'+CONTAINERID+'/json'	
+}
+
+sendContainerResourceUsage = function(res){
 	var prevConCpu = 0
 	var prevSysCpu = 0
 	res.on('data', function(info){
@@ -38,7 +46,8 @@ sendContainerInfo = function(res){
 				var dataToSend = {
 					id: CONTAINERID,
 					cpu: cpuUsedByCon,
-					mem: memUsedByCon
+					mem: memUsedByCon,
+					tag: 'Stats'
 				}
 				client.write(JSON.stringify(dataToSend))
 			}
@@ -49,5 +58,37 @@ sendContainerInfo = function(res){
 	})
 }
 
-var init = http.request(getContainerResourceUsage, sendContainerInfo)
+sendContainerInfo = function(res){
+	res.on('data', function(info){
+		if(info){
+			var conInfo = JSON.parse(info)
+			if(conInfo){
+				// console.log('conInfo:', conInfo.NetworkSettings)
+				var dataToSend = {
+					id: CONTAINERID,
+					name: conInfo.Name,
+					created: conInfo.Created,
+					image: conInfo.Config.Image,
+					restartCount: conInfo.RestartCount,
+					state: JSON.stringify(conInfo.State),
+					ipAddress: conInfo.NetworkSettings.IPAddress,
+					port: conInfo.NetworkSettings.Ports[Object.keys(conInfo.NetworkSettings.Ports)[0]][0].HostPort,
+					subnetAddress: conInfo.NetworkSettings.IPPrefixLen,
+					macAddress: conInfo.NetworkSettings.MacAddress,
+					tag: 'Info'
+				}
+				console.log('dataToSend:', dataToSend)
+				client.write(JSON.stringify(dataToSend))
+			}
+		}
+		else{
+			console.log('No info received from container')
+		}
+	})
+}
+
+var init = http.request(getContainerResourceUsage, sendContainerResourceUsage)
 init.end()
+
+var conInfo = http.request(getContainerInfo, sendContainerInfo)
+conInfo.end()
