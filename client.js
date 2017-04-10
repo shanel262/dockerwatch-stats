@@ -3,16 +3,9 @@ var net = require('net')
 
 var HOST = '127.0.0.1'
 var PORT = 8001
-var CONTAINERID = (process.argv[2] !== undefined) ? process.argv[2] : '2fd'
+var CONTAINERID = (process.argv[2] !== undefined) ? process.argv[2] : undefined
 
 var client = new net.Socket()
-client.connect(PORT, HOST, function(){
-	console.log('CONNECTED TO SERVER: ' + HOST + ':' + PORT)
-})
-
-client.on('close', function(){
-	console.log('CONNECTION CLOSED')
-})
 
 var getContainerResourceUsage = {
 	port: 8000,
@@ -84,11 +77,33 @@ sendContainerInfo = function(res){
 		else{
 			console.log('No info received from container')
 		}
+		setInfoTimer()
 	})
 }
 
-var init = http.request(getContainerResourceUsage, sendContainerResourceUsage)
-init.end()
+function setInfoTimer(){
+	setTimeout(function() {
+		console.log('Checking container information')
+		var conInfo = http.request(getContainerInfo, sendContainerInfo)
+		conInfo.end()
+	}, 300000);
+}
 
-var conInfo = http.request(getContainerInfo, sendContainerInfo)
-conInfo.end()
+if(CONTAINERID !== undefined){
+	client.connect(PORT, HOST, function(){
+		console.log('CONNECTED TO SERVER: ' + HOST + ':' + PORT)
+	})
+
+	client.on('close', function(){
+		console.log('CONNECTION CLOSED')
+	})
+
+	var init = http.request(getContainerResourceUsage, sendContainerResourceUsage)
+	init.end()
+
+	var conInfo = http.request(getContainerInfo, sendContainerInfo)
+	conInfo.end()
+}
+else{
+	(console.log('No container ID provided...Exiting'))
+}
