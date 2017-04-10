@@ -63,7 +63,7 @@ sendContainerInfo = function(res){
 		if(info){
 			var conInfo = JSON.parse(info)
 			if(conInfo){
-				// console.log('conInfo:', conInfo)
+				console.log('conInfo:', conInfo.NetworkSettings.Ports)
 				var dataToSend = {
 					id: CONTAINERID,
 					name: conInfo.Name,
@@ -72,7 +72,7 @@ sendContainerInfo = function(res){
 					restartCount: conInfo.RestartCount,
 					state: JSON.stringify(conInfo.State),
 					ipAddress: conInfo.NetworkSettings.IPAddress,
-					port: (conInfo.NetworkSettings.Ports !== null) ? conInfo.NetworkSettings.Ports[Object.keys(conInfo.NetworkSettings.Ports)[0]][0].HostPort : 0,
+					port: (conInfo.NetworkSettings.Ports !== null) ? conInfo.NetworkSettings.Ports[Object.keys(conInfo.NetworkSettings.Ports)[0]][0].HostPort : '0',
 					subnetAddress: conInfo.NetworkSettings.IPPrefixLen,
 					macAddress: conInfo.NetworkSettings.MacAddress,
 					tag: 'Info'
