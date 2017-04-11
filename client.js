@@ -30,6 +30,7 @@ sendContainerResourceUsage = function(res){
 		if(info){
 			var stats = JSON.parse(info)
 			if(stats){
+				// console.log('stats:', stats)
 				var currConCpu = stats.cpu_stats.cpu_usage.total_usage - prevConCpu
 				var currSysCpu = stats.cpu_stats.system_cpu_usage - prevSysCpu
 				prevConCpu = stats.cpu_stats.cpu_usage.total_usage
@@ -39,9 +40,12 @@ sendContainerResourceUsage = function(res){
 				var dataToSend = {
 					id: CONTAINERID,
 					cpu: cpuUsedByCon,
-					mem: memUsedByCon,
+					memPerc: memUsedByCon,
+					memBytes: stats.memory_stats.usage,
 					tag: 'Stats'
 				}
+				memLimit = stats.memory_stats.limit
+				// console.log('dataToSend:', dataToSend)
 				client.write(JSON.stringify(dataToSend))
 			}
 			else{
@@ -51,12 +55,14 @@ sendContainerResourceUsage = function(res){
 	})
 }
 
+var memLimit = 0
+
 sendContainerInfo = function(res){
 	res.on('data', function(info){
 		if(info){
 			var conInfo = JSON.parse(info)
 			if(conInfo){
-				console.log('conInfo:', conInfo.NetworkSettings.Ports)
+				// console.log('conInfo:', conInfo)
 				var dataToSend = {
 					id: CONTAINERID,
 					name: conInfo.Name,
@@ -68,8 +74,10 @@ sendContainerInfo = function(res){
 					port: (conInfo.NetworkSettings.Ports !== null) ? conInfo.NetworkSettings.Ports[Object.keys(conInfo.NetworkSettings.Ports)[0]][0].HostPort : '0',
 					subnetAddress: conInfo.NetworkSettings.IPPrefixLen,
 					macAddress: conInfo.NetworkSettings.MacAddress,
+					memLimit: memLimit,
 					tag: 'Info'
 				}
+				// console.log('dataToSend:', dataToSend)
 				client.write(JSON.stringify(dataToSend))
 			}
 		}
@@ -97,11 +105,13 @@ if(CONTAINERID !== undefined){
 		console.log('CONNECTION CLOSED')
 	})
 
-	var init = http.request(getContainerResourceUsage, sendContainerResourceUsage)
-	init.end()
+	var conStats = http.request(getContainerResourceUsage, sendContainerResourceUsage)
+	conStats.end()
 
-	var conInfo = http.request(getContainerInfo, sendContainerInfo)
-	conInfo.end()
+	setTimeout(function() {
+		var conInfo = http.request(getContainerInfo, sendContainerInfo)
+		conInfo.end()
+	}, 1000);
 }
 else{
 	(console.log('No container ID provided...Exiting'))
