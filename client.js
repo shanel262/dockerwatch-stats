@@ -24,28 +24,67 @@ var getContainerInfo = {
 }
 
 sendContainerResourceUsage = function(res){
-	var prevConCpu = 0
-	var prevSysCpu = 0
+	var prevConCpu = 0,
+	 prevSysCpu = 0,
+	 prevRxBytes = 0, //Received bytes
+	 prevTxBytes = 0, //Transmitted bytes
+	 prevRxPackets = 0,
+	 prevTxPackets = 0,
+	 prevRxDropped = 0,
+	 prevTxDropped = 0,
+	 prevRxError = 0,
+	 prevTxError = 0
 	res.on('data', function(info){
 		if(info){
 			var stats = JSON.parse(info)
 			if(stats){
-				// console.log('stats:', stats)
+				// console.log('stats:', stats.networks)
+				//CPU
 				var currConCpu = stats.cpu_stats.cpu_usage.total_usage - prevConCpu
 				var currSysCpu = stats.cpu_stats.system_cpu_usage - prevSysCpu
 				prevConCpu = stats.cpu_stats.cpu_usage.total_usage
 				prevSysCpu = stats.cpu_stats.system_cpu_usage
 				var cpuUsedByCon = ((currConCpu / currSysCpu) * 100) * stats.cpu_stats.cpu_usage.percpu_usage.length
+				//Memory
 				var memUsedByCon = ((stats.memory_stats.usage / stats.memory_stats.limit) * 100)
+				memLimit = stats.memory_stats.limit
+				//Net Bytes
+				var currentRxBytes = stats.networks.eth0.rx_bytes - prevRxBytes
+				var currentTxBytes = stats.networks.eth0.tx_bytes - prevTxBytes
+				prevRxBytes = stats.networks.eth0.rx_bytes
+				prevTxBytes = stats.networks.eth0.tx_bytes
+				//Net Packets
+				var currentRxPackets = stats.networks.eth0.rx_packets - prevRxPackets
+				var currentTxPackets = stats.networks.eth0.tx_packets - prevTxPackets
+				prevRxPackets = stats.networks.eth0.rx_packets
+				prevTxPackets = stats.networks.eth0.tx_packets
+				//Net Dropped
+				var currentRxDropped = stats.networks.eth0.rx_dropped - prevRxDropped
+				var currentTxDropped = stats.networks.eth0.tx_dropped - prevTxDropped
+				prevRxDropped = stats.networks.eth0.rx_dropped
+				prevTxDropped = stats.networks.eth0.tx_dropped
+				//Net Error
+				var currentRxError = stats.networks.eth0.rx_errors - prevRxError
+				var currentTxError = stats.networks.eth0.tx_errors - prevTxError
+				prevRxError = stats.networks.eth0.rx_errors
+				prevTxError = stats.networks.eth0.tx_errors
+				//Pack it all up
 				var dataToSend = {
 					id: CONTAINERID,
 					cpu: cpuUsedByCon,
 					memPerc: memUsedByCon,
 					memBytes: stats.memory_stats.usage,
+					rxBytes: currentRxBytes,
+					txBytes: currentTxBytes,
+					rxPackets: currentRxPackets,
+					txPackets: currentTxPackets,
+					rxDropped: currentRxDropped,
+					txDropped: currentTxDropped,
+					rxError: currentRxError,
+					txError: currentTxError,
 					tag: 'Stats'
 				}
-				memLimit = stats.memory_stats.limit
-				// console.log('dataToSend:', dataToSend)
+				console.log('dataToSend:', dataToSend)
 				client.write(JSON.stringify(dataToSend))
 			}
 			else{
