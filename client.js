@@ -34,7 +34,7 @@ sendContainerResourceUsage = function(res){
 				var currSysCpu = stats.cpu_stats.system_cpu_usage - prevSysCpu
 				prevConCpu = stats.cpu_stats.cpu_usage.total_usage
 				prevSysCpu = stats.cpu_stats.system_cpu_usage
-				var cpuUsedByCon = ((currConCpu / currSysCpu) * 100) * 2
+				var cpuUsedByCon = ((currConCpu / currSysCpu) * 100) * stats.cpu_stats.cpu_usage.percpu_usage.length
 				var memUsedByCon = ((stats.memory_stats.usage / stats.memory_stats.limit) * 100)
 				var dataToSend = {
 					id: CONTAINERID,
@@ -70,7 +70,6 @@ sendContainerInfo = function(res){
 					macAddress: conInfo.NetworkSettings.MacAddress,
 					tag: 'Info'
 				}
-				console.log('dataToSend:', dataToSend)
 				client.write(JSON.stringify(dataToSend))
 			}
 		}
